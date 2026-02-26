@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --color-primary: var(--app-primary);
+  --color-secondary: var(--app-secondary);
+  --color-text-base: var(--app-text-base);
+  --color-bg-primary: var(--app-bg-primary);
+}
+
+@layer base {
+  :root {
+    --app-primary: hsl(210 80% 40%);
+    --app-secondary: hsl(0 0% 100%);
+    --app-text-base: hsl(181 80.7% 52.5%);
+    --app-bg-primary: hsl(235 69.4% 72.6%);
+  }
+
+  .theme-black {
+    --app-primary: hsl(210 80% 40%);
+    --app-secondary: hsl(0 0% 100%);
+  }
+}
