@@ -2,9 +2,9 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 interface CallStatusState {
   current: "idle" | "process" | "complete" | "negotiating";
-  video: boolean; // whether video is on or off
-  audio: boolean; // whether audio is on or off
-  audioDevice: string; //enumerate audio devices and this is the chosen one
+  video: "off" | "enabled" | "disabled" | "complete"; // video feed status
+  audio: "off" | "enabled" | "disabled" | "complete"; // audio feed status
+  audioDevice: string; //enumerate audio devices and this is the chosen one (input device, we dont care about the output device)
   videoDevice: string; //enumerate video devices and this is the chosen one
   shareScreen: boolean; // whether screen sharing is on or off
   haveMedia: boolean; // is there a local stream or not, has getUsermedia run or not
@@ -12,8 +12,8 @@ interface CallStatusState {
 
 const initState: CallStatusState = {
   current: "idle",
-  video: false,
-  audio: false,
+  video: "off",
+  audio: "off",
   audioDevice: "default",
   videoDevice: "default",
   shareScreen: false,
@@ -31,6 +31,7 @@ function applyStatusUpdate<K extends keyof CallStatusState>(
   state: CallStatusState,
   payload: { prop: K; value: CallStatusState[K] },
 ) {
+  console.log("changign ", payload.prop, " to ", payload.value);
   state[payload.prop] = payload.value;
 }
 

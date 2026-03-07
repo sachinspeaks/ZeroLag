@@ -1,22 +1,17 @@
 import { useEffect, useRef } from "react";
 import HangupButton from "./HangupButton.tsx";
-import {
-  Mic,
-  Video,
-  Users,
-  MessageSquare,
-  Monitor,
-  ChevronUp,
-} from "lucide-react";
+import { Users, MessageSquare, Monitor } from "lucide-react";
 import { useAppSelector } from "@/hooks/reduxHooks.ts";
 import { type RootState } from "@/app/store.ts";
+import VideoButton from "./videoButton/videoButton.tsx";
+import AudioButton from "./audioButton/AudioButton.tsx";
 
 interface ActionButtonsProps {
   openCloseChat: () => void;
-  smallFeedEl: React.RefObject<HTMLVideoElement>;
+  smallFeedEl: React.RefObject<HTMLVideoElement | null>;
 }
 
-const ActionButtons = ({ openCloseChat }: ActionButtonsProps) => {
+const ActionButtons = ({ openCloseChat, smallFeedEl }: ActionButtonsProps) => {
   const callStatus = useAppSelector((state: RootState) => state.callStatus);
   const menuButtons = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,8 +64,6 @@ const ActionButtons = ({ openCloseChat }: ActionButtonsProps) => {
 
   const buttonWrapperClass =
     "relative inline-flex flex-col items-center justify-center w-[80px] h-[70px] cursor-pointer hover:bg-[#555] rounded-md px-2";
-  const caretUpClass =
-    "absolute top-1 right-1 text-[#ccc] hover:bg-[#555] cursor-pointer rounded";
   const btnTextClass = "text-white text-xs text-center mt-1";
 
   return (
@@ -81,18 +74,9 @@ const ActionButtons = ({ openCloseChat }: ActionButtonsProps) => {
       {/* Left — Mic + Camera */}
       <div className="flex basis-2/12 justify-start pl-2">
         {/* Mic Button */}
-        <div className={buttonWrapperClass}>
-          <Mic className="text-[#ccc]" size={22} />
-          <span className={btnTextClass}>{micText}</span>
-        </div>
-
+        <AudioButton smallFeedEl={smallFeedEl} />
         {/* Camera Button */}
-        <div className={buttonWrapperClass}>
-          <Video className="text-[#ccc]" size={22} />
-          <span className={btnTextClass}>
-            {callStatus.video ? "Stop" : "Start"} Video
-          </span>
-        </div>
+        <VideoButton smallFeedEl={smallFeedEl} />
       </div>
 
       {/* Center — Participants, Chat, Share Screen */}

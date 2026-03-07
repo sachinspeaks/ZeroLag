@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import callstatusReducer from "../features/callStatusSlice";
+import streamsReducer from "../features/streamsSlice";
 
 export const store = configureStore({
   reducer: {
     callStatus: callstatusReducer,
+    streams: streamsReducer,
   },
 });
 
