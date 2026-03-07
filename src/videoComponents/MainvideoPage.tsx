@@ -28,7 +28,7 @@ const MainVideoPage = () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
-          audio: false,
+          audio: true,
         });
         dispatch(updateCallStatus({ prop: "haveMedia", value: true }));
         dispatch(addStream({ who: "localStream", stream }));

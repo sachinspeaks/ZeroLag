@@ -55,6 +55,8 @@ const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
       dispatch(updateCallStatus({ prop: "audio", value: "enabled" }));
       const tracks = streams.localStream.stream.getVideoTracks();
       tracks.forEach((t) => (t.enabled = true));
+    } else if (callStatus.audio === "off") {
+      setSelectedAudioDevice("input-default");
     }
   };
 
