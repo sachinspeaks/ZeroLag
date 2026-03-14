@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import CallInfo from "./CallInfo";
 import ChatWindow from "./ChatWindow";
 import ActionButtons from "./ActionButton";
 import { addStream } from "@/features/streamsSlice";
@@ -8,38 +7,17 @@ import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
 import createPeerConnection from "@/utils/createPeerConnection";
 // import useSocket from "@/hooks/useSocket";
 import { updateCallStatus } from "@/features/callStatusSlice";
-import useSocket from "@/hooks/useSocket";
 import type { apptInfoType } from "@/types/globalTypes";
 import axios from "axios";
 
-const MainVideoPage = () => {
+const ProMainVideoPage = () => {
   // const socket = useSocket("https://localhost:5173");
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
   const callStatus = useAppSelector((state) => state.callStatus);
   const streams = useAppSelector((state) => state.streams);
   const dispatch = useAppDispatch();
   const smallFeedRef = useRef<HTMLVideoElement>(null);
   const largeFeedRef = useRef<HTMLVideoElement>(null);
-  const [showCallInfo, _] = useState(true);
-  const { socketRef, isReady } = useSocket("https://localhost:3001", token);
-
-  const [apptInfo, setApptInfo] = useState<apptInfoType[]>([]);
-
-  useEffect(() => {
-    //grab the token var out of the query string
-    const token = searchParams.get("token");
-    console.log(token);
-    const fetchDecodedToken = async () => {
-      const resp = await axios.post(
-        "https://localhost:3001/api/validate-link",
-        { token },
-      );
-      setApptInfo(resp.data);
-      // uuidRef.current = resp.data.uuid;
-    };
-    fetchDecodedToken();
-  }, []);
 
   useEffect(() => {
     const fetchMedia = async () => {
@@ -73,37 +51,6 @@ const MainVideoPage = () => {
     fetchMedia();
   }, []);
 
-  useEffect(() => {
-    const createOfferAsync = async () => {
-      if (!socketRef || !socketRef.current) return;
-      // after we have video or audio lets createa an offer
-      for (const s in streams) {
-        if (s !== "localStream") {
-          try {
-            const pc = streams[s].peerConnection;
-            const offer = await pc?.createOffer();
-            socketRef.current.emit("newOffer", { offer, apptInfo });
-          } catch (error) {
-            console.log("error in creating offer ", error);
-          }
-        }
-      }
-      dispatch(updateCallStatus({ prop: "haveCreatedOffer", value: true }));
-    };
-
-    if (
-      (callStatus.video === "enabled" || callStatus.audio === "enabled") &&
-      !callStatus.haveCreatedOffer
-    )
-      createOfferAsync();
-  }, [
-    callStatus.video,
-    callStatus.audio,
-    callStatus.haveCreatedOffer,
-    apptInfo,
-    isReady,
-  ]);
-
   return (
     <div>
       <div className="relative overflow-hidden">
@@ -123,7 +70,15 @@ const MainVideoPage = () => {
           playsInline
           className="absolute border border-white right-12.5 top-12.5 rounded-[10px] w-[320px]"
         />
-        {showCallInfo && apptInfo.length && <CallInfo apptInfo={apptInfo[0]} />}
+        {(callStatus.audio === "off" || callStatus.video === "off") && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-[#cacaca] bg-[#222] p-2.5">
+            <h1 className="text-white">
+              {searchParams.get("client")} is in the waiting room.
+              <br />
+              Call will start once you enable audio or video.
+            </h1>
+          </div>
+        )}
         <ChatWindow />
       </div>
       <ActionButtons smallFeedEl={smallFeedRef} openCloseChat={console.log} />
@@ -131,4 +86,4 @@ const MainVideoPage = () => {
   );
 };
 
-export default MainVideoPage;
+export default ProMainVideoPage;

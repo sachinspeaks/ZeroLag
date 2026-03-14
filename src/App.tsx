@@ -1,17 +1,7 @@
-import { useEffect } from "react";
-import { socket } from "./socket";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainVideoPage from "./videoComponents/MainvideoPage";
-import axios from "axios";
-
-const tokenLoader = async ({ request }: any) => {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
-  const resp = await axios.post("https://localhost:3001/api/validate-link", {
-    token,
-  });
-  return resp.data;
-};
+import Dashboard from "./siteComponents/DashBoard";
+import ProMainVideoPage from "./videoComponents/proMainVideoPage";
 
 const router = createBrowserRouter([
   {
@@ -21,14 +11,18 @@ const router = createBrowserRouter([
   {
     path: "/join-video",
     element: <MainVideoPage />,
-    loader: tokenLoader,
+  },
+  {
+    path: "/dashboard",
+    element: <Dashboard />,
+  },
+  {
+    path: "/join-video-pro",
+    element: <ProMainVideoPage />,
   },
 ]);
 
 function App() {
-  useEffect(() => {
-    socket.connect();
-  }, []);
   return <RouterProvider router={router} />;
 }
 

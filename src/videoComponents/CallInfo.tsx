@@ -1,13 +1,9 @@
+import type { apptInfoType } from "@/types/globalTypes";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
-interface apptInfoType {
-  professionalsFullName: string;
-  apptDate: string;
-  iat: number;
-}
-
 const CallInfo = ({ apptInfo }: { apptInfo: apptInfoType }) => {
+  alert(apptInfo);
   const [momentText, setMomentText] = useState(
     moment(apptInfo.apptDate).fromNow(),
   );

@@ -5,6 +5,7 @@ import Dropdown from "../dropDown";
 import getDevices from "@/utils/getDevices";
 import { updateCallStatus } from "@/features/callStatusSlice";
 import { addStream } from "@/features/streamsSlice";
+import startAudioStream from "@/utils/startAudioStream";
 
 interface videoButtonPropType {
   smallFeedEl: React.RefObject<HTMLVideoElement | null>;
@@ -57,6 +58,7 @@ const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
       tracks.forEach((t) => (t.enabled = true));
     } else if (callStatus.audio === "off") {
       setSelectedAudioDevice("input-default");
+      startAudioStream(streams);
     }
   };
 

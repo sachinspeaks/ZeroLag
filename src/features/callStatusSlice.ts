@@ -8,6 +8,9 @@ interface CallStatusState {
   videoDevice: string; //enumerate video devices and this is the chosen one
   shareScreen: boolean; // whether screen sharing is on or off
   haveMedia: boolean; // is there a local stream or not, has getUsermedia run or not
+  haveCreatedOffer: boolean; //have we created any offer
+  offer: any;
+  myRole: string;
 }
 
 const initState: CallStatusState = {
@@ -18,6 +21,9 @@ const initState: CallStatusState = {
   videoDevice: "default",
   shareScreen: false,
   haveMedia: false,
+  haveCreatedOffer: false,
+  offer: null,
+  myRole: "",
 };
 
 type UpdateCallStatusPayload = {
