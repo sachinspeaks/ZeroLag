@@ -138,7 +138,7 @@ function ClientsCard() {
 }
 
 function AppointmentsCard({ apptInfo }: { apptInfo: apptInfoType[] }) {
-  const [joiningId, setJoiningId] = useState<number | null>(null);
+  const [joiningId, _] = useState<number | null>(null);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -202,7 +202,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (socketRef && socketRef.current)
-      proSocketListeners(socketRef.current, setApptData, dispatch);
+      proSocketListeners.proDashboardSocketListener(
+        socketRef.current,
+        setApptData,
+        dispatch,
+      );
   }, [isReady]);
 
   return (

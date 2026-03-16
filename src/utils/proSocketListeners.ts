@@ -2,13 +2,12 @@ import { updateCallStatus } from "@/features/callStatusSlice";
 import type { apptInfoType } from "@/types/globalTypes";
 import type { Socket } from "socket.io-client";
 
-const proSocketListeners = (
+const proDashboardSocketListener = (
   socket: Socket,
   setApptInfo: React.Dispatch<React.SetStateAction<apptInfoType[]>>,
   dispatch: any,
 ) => {
   socket.on("apptData", (apptData) => {
-    alert("apptdata" + JSON.stringify(apptData));
     setApptInfo(apptData);
   });
   socket.on("newOfferWaiting", (offerData: any) => {
@@ -17,4 +16,14 @@ const proSocketListeners = (
     dispatch(updateCallStatus({ prop: "myRole", value: "answerer" }));
   });
 };
-export default proSocketListeners;
+
+const proVideoSocketListener = (
+  socket: Socket,
+  addIceCandidateToPc: Function,
+) => {
+  socket.on("iceToClient", (iceC) => {
+    addIceCandidateToPc(iceC);
+  });
+};
+
+export default { proDashboardSocketListener, proVideoSocketListener };

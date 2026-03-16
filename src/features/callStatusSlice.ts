@@ -9,7 +9,9 @@ interface CallStatusState {
   shareScreen: boolean; // whether screen sharing is on or off
   haveMedia: boolean; // is there a local stream or not, has getUsermedia run or not
   haveCreatedOffer: boolean; //have we created any offer
+  haveCreatedAnswer: boolean;
   offer: any;
+  answer: any;
   myRole: string;
 }
 
@@ -22,7 +24,9 @@ const initState: CallStatusState = {
   shareScreen: false,
   haveMedia: false,
   haveCreatedOffer: false,
+  haveCreatedAnswer: false,
   offer: null,
+  answer: null,
   myRole: "",
 };
 

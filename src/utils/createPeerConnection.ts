@@ -1,6 +1,8 @@
 import peerConfiguration from "./stunServers";
 
-const createPeerConnection = (): {
+const createPeerConnection = (
+  sendIce: Function,
+): {
   peerConnection: RTCPeerConnection | null;
   remoteStream: MediaStream | null;
 } => {
@@ -15,7 +17,14 @@ const createPeerConnection = (): {
     console.log("ice candidate found.");
     if (e.candidate) {
       // emit to signalling server
+      sendIce(e.candidate);
     }
+  });
+  peerConnection.addEventListener("track", (e) => {
+    //got a track from the remote
+    e.streams[0].getTracks().forEach((track) => {
+      remoteStream.addTrack(track);
+    });
   });
 
   return { peerConnection, remoteStream };
