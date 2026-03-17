@@ -102,6 +102,9 @@ const ProMainVideoPage = () => {
         dispatch(
           addStream({ who: "remote1", stream: remoteStream, peerConnection }),
         );
+        if (largeFeedRef.current) {
+          largeFeedRef.current.srcObject = remoteStream;
+        }
       } catch (error) {
         console.error("Error accessing media devices.", error);
       }
