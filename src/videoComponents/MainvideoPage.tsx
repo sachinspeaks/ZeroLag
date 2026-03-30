@@ -108,6 +108,7 @@ const MainVideoPage = () => {
           audio: true,
         });
         dispatch(updateCallStatus({ prop: "haveMedia", value: true }));
+        stream;
         dispatch(addStream({ who: "localStream", stream }));
         const videoDeviceId = stream.getVideoTracks()[0].getSettings().deviceId;
 
@@ -144,7 +145,7 @@ const MainVideoPage = () => {
 
   useEffect(() => {
     const createOfferAsync = async () => {
-      if (!socketRef || !socketRef.current) return;
+      if (!socketRef || !socketRef.current || !streamsRef.current) return;
       // after we have video or audio lets createa an offer
       for (const s in streamsRef.current) {
         if (s !== "localStream") {
@@ -152,6 +153,13 @@ const MainVideoPage = () => {
             const pc = streams[s].peerConnection;
             const offer = await pc?.createOffer();
             pc?.setLocalDescription(offer);
+            console.log("offer created ");
+            dispatch(
+              updateCallStatus({
+                prop: "offer",
+                value: { ...callStatus.offer, offer },
+              }),
+            );
             socketRef.current.emit("newOffer", { offer, apptInfo });
             ClientSocketListeners.ClientSocketListenerForAnswer(
               socketRef.current,

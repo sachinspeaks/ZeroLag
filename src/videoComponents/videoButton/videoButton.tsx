@@ -37,6 +37,7 @@ const VideoButton = ({ smallFeedEl }: videoButtonPropType) => {
       tracks.forEach((t) => (t.enabled = true));
     } else if (callStatus.haveMedia && smallFeedEl.current) {
       smallFeedEl.current.srcObject = streams.localStream.stream;
+
       startLocalVideoStream(streams, dispatch);
     } else {
       setPendingUpdate(true); //we dont have the media yet but this will make it available in the useeffect when media is present(callStatus.havemedia).
