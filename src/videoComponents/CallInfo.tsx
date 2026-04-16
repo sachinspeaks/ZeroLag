@@ -3,7 +3,6 @@ import moment from "moment";
 import { useEffect, useState } from "react";
 
 const CallInfo = ({ apptInfo }: { apptInfo: apptInfoType }) => {
-  alert(apptInfo);
   const [momentText, setMomentText] = useState(
     moment(apptInfo.apptDate).fromNow(),
   );

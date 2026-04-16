@@ -51,10 +51,10 @@ const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
     if (callStatus.audio === "enabled") {
       dispatch(updateCallStatus({ prop: "audio", value: "disabled" }));
       const tracks = streams.localStream.stream.getAudioTracks();
-      tracks.forEach((t) => (t.enabled = false));
+      tracks.forEach((t: MediaStreamTrack) => (t.enabled = false));
     } else if (callStatus.audio === "disabled") {
       dispatch(updateCallStatus({ prop: "audio", value: "enabled" }));
-      const tracks = streams.localStream.stream.getVideoTracks();
+      const tracks = streams.localStream.stream.getAudioTracks();
       tracks.forEach((t) => (t.enabled = true));
     } else if (callStatus.audio === "off") {
       setSelectedAudioDevice("input-default");

@@ -27,18 +27,20 @@ const ProMainVideoPage = () => {
     //add an ice candidate from the remote to, the pc
     for (const s in streamsRef.current) {
       if (s != "localStream") {
-        const pc = streams[s].peerConnection;
+        const pc = streamsRef.current[s].peerConnection;
         pc?.addIceCandidate(iceC);
       }
     }
   };
 
   useEffect(() => {
-    if (socketRef && socketRef.current)
-      proSocketListeners.proVideoSocketListener(
+    if (socketRef && socketRef.current) {
+      const cleanup = proSocketListeners.proVideoSocketListener(
         socketRef.current,
         addIceCandidateToPc,
       );
+      return cleanup;
+    }
   }, [isReady]);
 
   const sendIce = (candidate: string) => {
@@ -61,7 +63,7 @@ const ProMainVideoPage = () => {
     const flush = () => {
       for (const c of pendingCandidates.current)
         socket.emit("iceToServer", {
-          c,
+          candidate: c,
           who: "professional",
           uuid: searchParams.get("uuid"),
         });
@@ -98,6 +100,7 @@ const ProMainVideoPage = () => {
         }
 
         const { peerConnection, remoteStream } = createPeerConnection(sendIce);
+
         if (!remoteStream) return;
         dispatch(
           addStream({ who: "remote1", stream: remoteStream, peerConnection }),

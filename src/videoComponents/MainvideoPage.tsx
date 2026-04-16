@@ -22,13 +22,17 @@ const MainVideoPage = () => {
   const dispatch = useAppDispatch();
   const smallFeedRef = useRef<HTMLVideoElement>(null);
   const largeFeedRef = useRef<HTMLVideoElement>(null);
-  const [showCallInfo, _] = useState(true);
+  const [showCallInfo, setShowCallInfo] = useState(true);
   const { socketRef, isReady } = useSocket("https://localhost:3001", token);
-  const pendingCandidates = useRef<string[]>([]);
+  const pendingCandidates = useRef<RTCIceCandidate[]>([]);
   const uuidRef = useRef<string>(null);
   const streamsRef = useRef<StreamsState | null>(null);
 
   const [apptInfo, setApptInfo] = useState<apptInfoType[]>([]);
+
+  useEffect(() => {
+    if (isReady) alert("ready");
+  }, [isReady]);
 
   useEffect(() => {
     //grab the token var out of the query string
@@ -39,7 +43,7 @@ const MainVideoPage = () => {
         "https://localhost:3001/api/validate-link",
         { token },
       );
-      setApptInfo(resp.data);
+      setApptInfo([resp.data]);
       uuidRef.current = resp.data.uuid;
     };
     fetchDecodedToken();
@@ -50,21 +54,24 @@ const MainVideoPage = () => {
 
     for (const s in streamsRef.current) {
       if (s != "localStream") {
-        const pc = streams[s].peerConnection;
+        const pc = streamsRef.current[s].peerConnection;
         pc?.addIceCandidate(iceC);
+        setShowCallInfo(false);
       }
     }
   };
 
   useEffect(() => {
-    if (socketRef && socketRef.current)
-      ClientSocketListeners.ClientSocketListenerForIce(
+    if (socketRef.current) {
+      const cleanUp = ClientSocketListeners.ClientSocketListenerForIce(
         socketRef.current,
         addIceCandidateToPc,
       );
+      return cleanUp;
+    }
   }, [isReady]);
 
-  const sendIce = (candidate: string) => {
+  const sendIce = (candidate: RTCIceCandidate) => {
     const socket = socketRef.current;
     if (!socket || !socket.connected) {
       pendingCandidates.current.push(candidate);
@@ -108,7 +115,6 @@ const MainVideoPage = () => {
           audio: true,
         });
         dispatch(updateCallStatus({ prop: "haveMedia", value: true }));
-        stream;
         dispatch(addStream({ who: "localStream", stream }));
         const videoDeviceId = stream.getVideoTracks()[0].getSettings().deviceId;
 
@@ -122,6 +128,7 @@ const MainVideoPage = () => {
         }
 
         const { peerConnection, remoteStream } = createPeerConnection(sendIce);
+
         if (!remoteStream) return;
         dispatch(
           addStream({ who: "remote1", stream: remoteStream, peerConnection }),
@@ -146,13 +153,14 @@ const MainVideoPage = () => {
   useEffect(() => {
     const createOfferAsync = async () => {
       if (!socketRef || !socketRef.current || !streamsRef.current) return;
+      if (!socketRef.current.connected) return;
       // after we have video or audio lets createa an offer
       for (const s in streamsRef.current) {
         if (s !== "localStream") {
           try {
-            const pc = streams[s].peerConnection;
+            const pc = streamsRef.current[s].peerConnection;
             const offer = await pc?.createOffer();
-            pc?.setLocalDescription(offer);
+            await pc?.setLocalDescription(offer);
             console.log("offer created ");
             dispatch(
               updateCallStatus({
@@ -160,11 +168,14 @@ const MainVideoPage = () => {
                 value: { ...callStatus.offer, offer },
               }),
             );
-            socketRef.current.emit("newOffer", { offer, apptInfo });
-            ClientSocketListeners.ClientSocketListenerForAnswer(
-              socketRef.current,
-              dispatch,
-            );
+            socketRef.current.emit("newOffer", {
+              offer,
+              apptInfo: apptInfo[0],
+            });
+            // ClientSocketListeners.ClientSocketListenerForAnswer(
+            //   socketRef.current,
+            //   dispatch,
+            // );
           } catch (error) {
             console.log("error in creating offer ", error);
           }
@@ -174,8 +185,11 @@ const MainVideoPage = () => {
     };
 
     if (
-      (callStatus.video === "enabled" || callStatus.audio === "enabled") &&
-      !callStatus.haveCreatedOffer
+      callStatus.video === "enabled" &&
+      callStatus.audio === "enabled" &&
+      !callStatus.haveCreatedOffer &&
+      isReady &&
+      apptInfo.length
     )
       createOfferAsync();
   }, [
@@ -185,6 +199,14 @@ const MainVideoPage = () => {
     apptInfo,
     isReady,
   ]);
+  useEffect(() => {
+    if (socketRef.current) {
+      return ClientSocketListeners.ClientSocketListenerForAnswer(
+        socketRef.current,
+        dispatch,
+      );
+    }
+  }, [isReady]);
 
   //useEffect to set remote desc when callStatus has a answer from the server
   useEffect(() => {

@@ -7,23 +7,34 @@ const proDashboardSocketListener = (
   setApptInfo: React.Dispatch<React.SetStateAction<apptInfoType[]>>,
   dispatch: any,
 ) => {
-  socket.on("apptData", (apptData) => {
+  const apptHandler = (apptData: any) => {
     setApptInfo(apptData);
-  });
-  socket.on("newOfferWaiting", (offerData: any) => {
+  };
+  const offerHandler = (offerData: any) => {
     // dispatch the offer to redux so that it is available for later
     dispatch(updateCallStatus({ prop: "offer", value: offerData.offer }));
     dispatch(updateCallStatus({ prop: "myRole", value: "answerer" }));
-  });
+  };
+  socket.on("apptData", apptHandler);
+  socket.on("newOfferWaiting", offerHandler);
+  return () => {
+    socket.off("apptData", apptHandler);
+    socket.off("newOfferWaiting", offerHandler);
+  };
 };
 
 const proVideoSocketListener = (
   socket: Socket,
   addIceCandidateToPc: Function,
 ) => {
-  socket.on("iceToClient", (iceC) => {
+  const handler = (iceC: RTCIceCandidate) => {
+    console.log("got ice from server sent by client");
     addIceCandidateToPc(iceC);
-  });
+  };
+  socket.on("iceToProfessional", handler);
+  return () => {
+    socket.off("iceToProfessional", handler);
+  };
 };
 
 export default { proDashboardSocketListener, proVideoSocketListener };

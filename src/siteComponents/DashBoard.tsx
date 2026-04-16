@@ -202,7 +202,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (socketRef && socketRef.current)
-      proSocketListeners.proDashboardSocketListener(
+      return proSocketListeners.proDashboardSocketListener(
         socketRef.current,
         setApptData,
         dispatch,
