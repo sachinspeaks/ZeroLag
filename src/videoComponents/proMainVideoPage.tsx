@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import ChatWindow from "./ChatWindow";
 import ActionButtons from "./ActionButton";
 import { addStream, type StreamsState } from "@/features/streamsSlice";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
@@ -42,6 +41,20 @@ const ProMainVideoPage = () => {
       return cleanup;
     }
   }, [isReady]);
+
+  useEffect(() => {
+    if (!socketRef || !socketRef.current) return;
+    const cleanup = proSocketListeners.proDashboardSocketListener(
+      socketRef.current,
+      () => {},
+      dispatch,
+    );
+    return cleanup;
+  }, [isReady]);
+
+  useEffect(() => {
+    setHaveGottenIce(false);
+  }, [callStatus.offer]);
 
   const sendIce = (candidate: string) => {
     const socket = socketRef.current;
@@ -108,12 +121,18 @@ const ProMainVideoPage = () => {
         if (largeFeedRef.current) {
           largeFeedRef.current.srcObject = remoteStream;
         }
-      } catch (error) {
-        console.error("Error accessing media devices.", error);
+      } catch {
+        // media device error
       }
     };
     fetchMedia();
   }, []);
+
+  useEffect(() => {
+    if (streams.remote1) {
+      streamsRef.current = streams;
+    }
+  }, [streams]);
 
   useEffect(() => {
     const setAsyncOffer = async () => {
@@ -121,7 +140,6 @@ const ProMainVideoPage = () => {
         if (s !== "localStream") {
           const pc = streams[s].peerConnection;
           await pc?.setRemoteDescription(callStatus.offer);
-          console.log("*******", pc?.signalingState); //have local answer
         }
       }
     };
@@ -137,7 +155,6 @@ const ProMainVideoPage = () => {
           const pc = streams[s].peerConnection;
           const answer = await pc?.createAnswer();
           await pc?.setLocalDescription(answer);
-          console.log("#######", pc?.signalingState);
           dispatch(
             updateCallStatus({ prop: "haveCreatedAnswer", value: true }),
           );
@@ -153,7 +170,8 @@ const ProMainVideoPage = () => {
     if (
       callStatus.audio === "enabled" &&
       callStatus.video === "enabled" &&
-      !callStatus.haveCreatedAnswer
+      !callStatus.haveCreatedAnswer &&
+      callStatus.offer
     ) {
       createAnswerAsync();
     }
@@ -162,6 +180,7 @@ const ProMainVideoPage = () => {
     callStatus.video,
     callStatus.haveCreatedAnswer,
     isReady,
+    callStatus.offer,
   ]);
 
   useEffect(() => {
@@ -181,44 +200,43 @@ const ProMainVideoPage = () => {
         }
       });
     };
-    if (streams.remote1 && !haveGottenIce) {
+    if (streams.remote1 && callStatus.offer && !haveGottenIce) {
       setHaveGottenIce(true);
       getIceAsync();
-      streamsRef.current = streams;
     }
-  }, [isReady, streams, haveGottenIce]);
+  }, [isReady, streams, haveGottenIce, callStatus.offer]);
 
   return (
     <div>
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden bg-gradient-to-t from-gray-600 to-black">
         <video
           ref={largeFeedRef}
           id="large-feed"
           autoPlay
-          controls
           playsInline
-          className="bg-black h-screen w-screen -scale-x-100"
+          className="h-screen w-screen -scale-x-100"
         />
         <video
           ref={smallFeedRef}
           id="own-feed"
           autoPlay
-          controls
           playsInline
-          className="absolute border border-white right-12.5 top-12.5 rounded-[10px] w-[320px]"
+          className="absolute border border-white right-3 top-3 sm:right-8 sm:top-8 md:right-12.5 md:top-12.5 rounded-[10px] w-[120px] sm:w-[200px] md:w-[320px]"
         />
         {(callStatus.audio === "off" || callStatus.video === "off") && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-[#cacaca] bg-[#222] p-2.5">
-            <h1 className="text-white">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-[#cacaca] bg-[#222] p-3 sm:p-5 w-[90vw] sm:w-auto">
+            <h1 className="text-white text-sm sm:text-base">
               {searchParams.get("client")} is in the waiting room.
               <br />
               Call will start once you enable audio or video.
             </h1>
           </div>
         )}
-        <ChatWindow />
       </div>
-      <ActionButtons smallFeedEl={smallFeedRef} openCloseChat={console.log} />
+      <ActionButtons
+        smallFeedEl={smallFeedRef}
+        largeFeedEl={largeFeedRef}
+      />
     </div>
   );
 };

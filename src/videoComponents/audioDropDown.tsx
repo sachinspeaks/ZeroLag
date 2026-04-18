@@ -64,7 +64,7 @@ export default function AudioDropDown() {
           }));
         setDevices(audioDevices);
       })
-      .catch(console.error);
+      .catch(() => {});
   }, []);
 
   const select = (kind: keyof DeviceSelections, deviceId: string) =>

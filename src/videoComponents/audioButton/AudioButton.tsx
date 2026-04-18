@@ -4,8 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import Dropdown from "../dropDown";
 import getDevices from "@/utils/getDevices";
 import { updateCallStatus } from "@/features/callStatusSlice";
-import { addStream } from "@/features/streamsSlice";
-import startAudioStream from "@/utils/startAudioStream";
 
 interface videoButtonPropType {
   smallFeedEl: React.RefObject<HTMLVideoElement | null>;
@@ -14,7 +12,7 @@ interface videoButtonPropType {
 const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
   const callStatus = useAppSelector((state) => state.callStatus);
   const [caretOpen, setCaretOpen] = useState<boolean>(false);
-  const skipFirstRender = useRef(false);
+  const skipFirstRender = useRef(true);
   const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>(
     callStatus.audioDevice,
   );
@@ -32,7 +30,7 @@ const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
   }
 
   const buttonWrapperClass =
-    "relative inline-flex flex-col items-center justify-center w-[80px] h-[70px] cursor-pointer hover:bg-[#555] rounded-md px-2";
+    "relative inline-flex flex-col items-center justify-center w-[60px] h-[55px] sm:w-[80px] sm:h-[70px] cursor-pointer hover:bg-[#555] rounded-md px-1 sm:px-2";
   const btnTextClass = "text-white text-xs text-center mt-1";
 
   useEffect(() => {
@@ -58,7 +56,6 @@ const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
       tracks.forEach((t) => (t.enabled = true));
     } else if (callStatus.audio === "off") {
       setSelectedAudioDevice("input-default");
-      startAudioStream(streams);
     }
   };
 
@@ -73,21 +70,32 @@ const AudioButton = ({ smallFeedEl }: videoButtonPropType) => {
       // update the output audio
       smallFeedEl.current?.setSinkId(deviceId);
     } else if (deviceType === "input") {
-      const newConstraints: MediaStreamConstraints = {
+      const newStream = await navigator.mediaDevices.getUserMedia({
         audio: { deviceId: { exact: deviceId } },
-        video:
-          callStatus.videoDevice === "default"
-            ? true
-            : { deviceId: { exact: callStatus.videoDevice } },
-      };
-      const newStream =
-        await navigator.mediaDevices.getUserMedia(newConstraints);
-      // update the redux states with new deviceid and status
+      });
+      //stop old audio tracks
+      streams.localStream.stream.getAudioTracks().forEach((t) => t.stop());
+
+      const [audioTrack] = newStream.getAudioTracks();
+
+      streams.localStream.stream
+        .getAudioTracks()
+        .forEach((t) => streams.localStream.stream.removeTrack(t));
+      streams.localStream.stream.addTrack(audioTrack);
+
+      for (const s in streams) {
+        if (s !== "localStream") {
+          const senders = streams[s].peerConnection?.getSenders();
+          const sender = senders?.find((s) => s.track?.kind === "audio");
+          if (sender) {
+            sender.replaceTrack(audioTrack); // device switch — replace existing
+          } else {
+            streams[s].peerConnection?.addTrack(audioTrack, newStream); // first join — add
+          }
+        }
+      }
       dispatch(updateCallStatus({ prop: "audioDevice", value: deviceId }));
       dispatch(updateCallStatus({ prop: "audio", value: "enabled" }));
-      dispatch(addStream({ who: "localStream", stream: newStream }));
-
-      // const tracks = newStream.getAudioTracks();
     }
   }
 

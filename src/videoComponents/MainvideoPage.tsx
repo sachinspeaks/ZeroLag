@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import CallInfo from "./CallInfo";
-import ChatWindow from "./ChatWindow";
 import ActionButtons from "./ActionButton";
 import { addStream, type StreamsState } from "@/features/streamsSlice";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHooks";
@@ -31,13 +30,8 @@ const MainVideoPage = () => {
   const [apptInfo, setApptInfo] = useState<apptInfoType[]>([]);
 
   useEffect(() => {
-    if (isReady) alert("ready");
-  }, [isReady]);
-
-  useEffect(() => {
     //grab the token var out of the query string
     const token = searchParams.get("token");
-    console.log(token);
     const fetchDecodedToken = async () => {
       const resp = await axios.post(
         "https://localhost:3001/api/validate-link",
@@ -136,12 +130,31 @@ const MainVideoPage = () => {
         if (largeFeedRef.current) {
           largeFeedRef.current.srcObject = remoteStream;
         }
-      } catch (error) {
-        console.error("Error accessing media devices.", error);
+      } catch {
+        // media device error
       }
     };
     fetchMedia();
   }, []);
+
+  useEffect(() => {
+    if (!isReady || !callStatus.answer || !socketRef.current) return;
+    const fetchBufferedIce = async () => {
+      const iceCandidates = await socketRef.current?.emitWithAck(
+        "getIce",
+        uuidRef.current,
+        "client",
+      );
+      iceCandidates.forEach((ice: RTCIceCandidate) => {
+        for (const s in streamsRef.current) {
+          if (s !== "localStream") {
+            streamsRef.current[s].peerConnection?.addIceCandidate(ice);
+          }
+        }
+      });
+    };
+    fetchBufferedIce();
+  }, [isReady, callStatus.answer]);
 
   useEffect(() => {
     //we cannot update streamsRef untill we know redux is finished
@@ -161,7 +174,6 @@ const MainVideoPage = () => {
             const pc = streamsRef.current[s].peerConnection;
             const offer = await pc?.createOffer();
             await pc?.setLocalDescription(offer);
-            console.log("offer created ");
             dispatch(
               updateCallStatus({
                 prop: "offer",
@@ -176,8 +188,8 @@ const MainVideoPage = () => {
             //   socketRef.current,
             //   dispatch,
             // );
-          } catch (error) {
-            console.log("error in creating offer ", error);
+          } catch {
+            // offer creation error
           }
         }
       }
@@ -208,6 +220,27 @@ const MainVideoPage = () => {
     }
   }, [isReady]);
 
+  useEffect(() => {
+    if (!socketRef.current) return;
+    const handler = async () => {
+      if (!streamsRef.current) return;
+      dispatch(updateCallStatus({ prop: "answer", value: null }));
+      for (const s in streamsRef.current) {
+        if (s !== "localStream") {
+          const pc = streamsRef.current[s].peerConnection;
+          if (!pc) continue;
+          const offer = await pc.createOffer({ iceRestart: true });
+          await pc.setLocalDescription(offer);
+          socketRef.current?.emit("newOffer", { offer, apptInfo: apptInfo[0] });
+        }
+      }
+    };
+    socketRef.current.on("proReconnected", handler);
+    return () => {
+      socketRef.current?.off("proReconnected", handler);
+    };
+  }, [isReady, apptInfo]);
+
   //useEffect to set remote desc when callStatus has a answer from the server
   useEffect(() => {
     const asyncAddAnswer = async () => {
@@ -215,7 +248,6 @@ const MainVideoPage = () => {
         if (s !== "localStream") {
           const pc = streams[s].peerConnection;
           await pc?.setRemoteDescription(callStatus.answer);
-          console.log(pc?.signalingState);
         }
       }
     };
@@ -224,27 +256,24 @@ const MainVideoPage = () => {
 
   return (
     <div>
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden bg-gradient-to-t from-gray-600 to-black">
         <video
           ref={largeFeedRef}
           id="large-feed"
           autoPlay
-          controls
           playsInline
-          className="bg-black h-screen w-screen -scale-x-100"
+          className="h-screen w-screen -scale-x-100"
         />
         <video
           ref={smallFeedRef}
           id="own-feed"
           autoPlay
-          controls
           playsInline
-          className="absolute border border-white right-12.5 top-12.5 rounded-[10px] w-[320px]"
+          className="absolute border border-white right-3 top-3 sm:right-8 sm:top-8 md:right-12.5 md:top-12.5 rounded-[10px] w-[120px] sm:w-[200px] md:w-[320px]"
         />
         {showCallInfo && apptInfo.length && <CallInfo apptInfo={apptInfo[0]} />}
-        <ChatWindow />
       </div>
-      <ActionButtons smallFeedEl={smallFeedRef} openCloseChat={console.log} />
+      <ActionButtons smallFeedEl={smallFeedRef} largeFeedEl={largeFeedRef} />
     </div>
   );
 };

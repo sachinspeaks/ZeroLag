@@ -121,7 +121,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 function ClientsCard() {
   return (
-    <div className="bg-amber-500 rounded-2xl p-6 shadow-sm h-full">
+    <div className="bg-amber-500 rounded-2xl p-4 sm:p-6 shadow-sm h-full">
       <h2 className="text-white text-lg font-bold mb-5 tracking-wide">
         Clients
       </h2>
@@ -138,20 +138,22 @@ function ClientsCard() {
 }
 
 function AppointmentsCard({ apptInfo }: { apptInfo: apptInfoType[] }) {
-  const [joiningId, _] = useState<number | null>(null);
+  const [joiningId, setJoiningId] = useState<number | null>(null);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token");
 
   const handleJoin = (appt: apptInfoType) => {
+    setJoiningId(appt.uuid);
     navigate(
       `/join-video-pro?token=${token}&uuid=${appt.uuid}&client=${appt.clientName}`,
     );
+    appt.waiting = false; //optimistic update to remove the join button immediately on click. The socket listener will update the apptInfo state with the correct waiting status when it receives the updated apptInfo from the server.
   };
 
   return (
-    <div className="bg-blue-500 rounded-2xl p-6 shadow-sm h-full">
+    <div className="bg-blue-500 rounded-2xl p-4 sm:p-6 shadow-sm h-full">
       <h2 className="text-white text-lg font-bold mb-5 tracking-wide">
         Coming Appointments
       </h2>
@@ -223,7 +225,7 @@ export default function Dashboard() {
           <span className="text-white font-semibold text-base">Dashboard</span>
         </header>
 
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-6 hidden lg:block">
             Dashboard
           </h1>

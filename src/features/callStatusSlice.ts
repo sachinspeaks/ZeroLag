@@ -41,7 +41,6 @@ function applyStatusUpdate<K extends keyof CallStatusState>(
   state: CallStatusState,
   payload: { prop: K; value: CallStatusState[K] },
 ) {
-  console.log("changign ", payload.prop, " to ", payload.value);
   state[payload.prop] = payload.value;
 }
 

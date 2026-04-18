@@ -14,6 +14,7 @@ const proDashboardSocketListener = (
     // dispatch the offer to redux so that it is available for later
     dispatch(updateCallStatus({ prop: "offer", value: offerData.offer }));
     dispatch(updateCallStatus({ prop: "myRole", value: "answerer" }));
+    dispatch(updateCallStatus({ prop: "haveCreatedAnswer", value: false }));
   };
   socket.on("apptData", apptHandler);
   socket.on("newOfferWaiting", offerHandler);
@@ -28,7 +29,6 @@ const proVideoSocketListener = (
   addIceCandidateToPc: Function,
 ) => {
   const handler = (iceC: RTCIceCandidate) => {
-    console.log("got ice from server sent by client");
     addIceCandidateToPc(iceC);
   };
   socket.on("iceToProfessional", handler);

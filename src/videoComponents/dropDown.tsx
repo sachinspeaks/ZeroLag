@@ -42,7 +42,6 @@ export default function Dropdown({
     if (type === "video") {
       dropDownEl = options.map((option: MediaDeviceInfo) => {
         const isSelected = selected === option.deviceId;
-        console.log(selected, "   curdeviceId ", option.deviceId);
         return (
           <li key={option.deviceId}>
             <button

@@ -23,7 +23,7 @@ const VideoButton = ({ smallFeedEl }: videoButtonPropType) => {
   );
   const [videoDeviceList, setVideoDeviceList] = useState<MediaDeviceInfo[]>([]);
   const buttonWrapperClass =
-    "relative inline-flex flex-col items-center justify-center w-[80px] h-[70px] cursor-pointer hover:bg-[#555] rounded-md px-2";
+    "relative inline-flex flex-col items-center justify-center w-[60px] h-[55px] sm:w-[80px] sm:h-[70px] cursor-pointer hover:bg-[#555] rounded-md px-1 sm:px-2";
   const btnTextClass = "text-white text-xs text-center mt-1";
 
   const startStopVideo = () => {
@@ -87,6 +87,7 @@ const VideoButton = ({ smallFeedEl }: videoButtonPropType) => {
             : { deviceId: { exact: callStatus.audioDevice } },
         video: { deviceId: { exact: selectedVideoDevice } },
       };
+      streams.localStream?.stream.getTracks().forEach((t) => t.stop());
       const newStream =
         await navigator.mediaDevices.getUserMedia(newConstraints);
 
@@ -102,7 +103,19 @@ const VideoButton = ({ smallFeedEl }: videoButtonPropType) => {
 
       dispatch(addStream({ who: "localStream", stream: newStream }));
 
-      // const tracks = newStream.getVideoTracks(); //stop the old tracks add new tracks i.e. re negotiation
+      const [videoTrack] = newStream.getVideoTracks(); //stop the old tracks add new tracks i.e. re negotiation
+      for (const s in streams) {
+        if (s !== "localStream") {
+          //getSenders will grab all the rtcrtpsenders that the peerconnection has
+          const senders = streams[s].peerConnection?.getSenders();
+          //find the sender that is incharge of sending the video track and replace it with the new track from the new stream
+          const sender = senders?.find((s) => {
+            if (s.track) return s.track.kind === videoTrack.kind;
+            else return false;
+          });
+          if (sender) sender.replaceTrack(videoTrack);
+        }
+      }
     };
     setNewDevice();
   }, [selectedVideoDevice, callStatus.audioDevice]);

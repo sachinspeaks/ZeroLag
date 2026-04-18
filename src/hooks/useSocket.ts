@@ -35,7 +35,6 @@ const getOrCreateSocket = (
 };
 
 const useSocket = (url: string, token?: string | null) => {
-  alert(token);
   const socketRef = useRef<Socket | null>(null);
   const [isReady, setIsReady] = useState(false);
 
