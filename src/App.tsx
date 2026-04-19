@@ -1,12 +1,13 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainVideoPage from "./videoComponents/MainvideoPage";
 import Dashboard from "./siteComponents/DashBoard";
+import Home from "./siteComponents/Home";
 import ProMainVideoPage from "./videoComponents/proMainVideoPage";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <h1 className="bg-primary"> Hello Home Page!!!</h1>,
+    element: <Home />,
   },
   {
     path: "/join-video",
